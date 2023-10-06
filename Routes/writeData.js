@@ -8,55 +8,53 @@ router.put("/api/population/state/:state/city/:city", (req, res) => {
   const city = req.params.city.replace(regex, function(x){return x.toUpperCase();});
   const newPopulation = req.body.population;
 
-
-
   let alreadyExists = false;
 
-  const readStream = fs.createReadStream('./city_populations.csv');
-  // const writeStream = fs.createWriteStream('./temp.csv');
+  // const readStream = fs.createReadStream('./city_populations.csv');
+  const result = [];
 
-  const updatedData = [];
+fs.createReadStream('./city_populations.csv')
+    .pipe(csv())
+    .on('data', (data) => result.push(data))
+    .on('end', () => { 
+  
+      result.forEach((info) => {
+        if (info.city === city && info.state === state) {
+          info.population = newPopulation;
+          // result.push(`${info.city},${info.state},${info.population}\n`)
 
-  readStream
-      .pipe(csv())
-      .on('data', (data) => {
-          if(data.city === city && data.state === state){
-            data.population = newPopulation
-            fs.createWriteStream('./city_populations.csv')
-                .write(`${data[0]},${data[1]},${data[2]}\n`);
-          }
-          fs.createWriteStream('./city_populations.csv',)
-          .write(`${data[0]},${data[1]},${data[2]}\n`);
-          
-      })
-      .on('end', () => { 
-        alreadyExists= true
-        console.log(alreadyExists)
-        // fs.writeFileSync('./city_populations.csv', '');
-        // fs.createWriteStream('./city_populations.csv', { flags: 'a' })
-        //     .write('City,State,Population\n');
-      
-        // updatedData.forEach((data) => {
-        //     fs.createWriteStream('./city_populations.csv', { flags: 'a' })
-        //         .write(`${data[0]},${data[1]},${data[2]}\n`);
-        // });
-        if (alreadyExists) {
-          console.log("hi")
+          alreadyExists = true;
+        }
+        
+        // console.log(result)
+      });
+
+      if (alreadyExists) { 
+        const writeStream = fs.createWriteStream('./city_populations.csv');
+        writeStream.write('city,state,population\n')
+        result.forEach((info) => {
+          writeStream.write(`${info.city},${info.state},${info.population}\n`);
+          alreadyExists = false
+        })
+        
+        writeStream.end(() => {
           return res.status(200).json({
             message: 'Population data updated successfully.',
           });
-        } else {
-          fs.appendFileSync('./city_populations.csv', `${city},${state},${newPopulation}\n`);
-
+        });
+      } else {
+        // Append the new data to the file
+        fs.appendFile('./city_populations.csv', `${city},${state},${newPopulation}\n`, (err) => {
+          if (err) {
+            return res.status(500).json({
+              message: 'Error updating population data.',
+            });
+          }
           return res.status(201).json({
             message: 'Population data created successfully.',
           });
-        }})
-      .on('error',()=>{
-
-        })
+        });
       }
-    )
-  
-
+    });
+});
 module.exports = router;
