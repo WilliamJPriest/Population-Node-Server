@@ -21,7 +21,6 @@ fs.createReadStream('./city_populations.csv')
       result.forEach((info) => {
         if (info.city === city && info.state === state) {
           info.population = newPopulation;
-          // result.push(`${info.city},${info.state},${info.population}\n`)
 
           alreadyExists = true;
         }
