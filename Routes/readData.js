@@ -3,7 +3,13 @@ const fs = require('fs');
 const csv = require('csv-parser');
 
 router.get("/api/population/state/:state/city/:city", (req, res) => {
-
+  const regex = /(\b[a-z](?!\s))/g
+  const state = req.params.state.replace(regex, function(x){return x.toUpperCase();});
+  const city = req.params.city.replace(regex, function(x){return x.toUpperCase();});
+  
+  console.log(state)
+  console.log(city)
+  const results = [];
 
   fs.createReadStream('./city_populations.csv')
     .pipe(csv())

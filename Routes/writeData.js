@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const fs = require('fs');
 const csv = require('csv-parser');
+const readline = require('readline');
+
 
 router.put("/api/population/state/:state/city/:city", (req, res) => {
   const regex = /(\b[a-z](?!\s))/g
@@ -22,23 +24,22 @@ router.put("/api/population/state/:state/city/:city", (req, res) => {
   readStream
     .pipe(csv())
     .on('data', (data) => {
-      if (data.state === state && data.city === city) {
-        data.Population = newPopulation;
-        updatedData = `${data.State},${data.City},${data.Population}`;
-        alreadyExists = true;
-      }
-
-      // Write the original data to the temporary file
-      writeStream.write(`${data.State},${data.City},${data.Population}`);
-    })
+        if (data.City === city && data.State == state) {
+          data.Population = newPopulation;
+          alreadyExists = true
+        }
+        results.push(data);
+      })
     .on('end', () => {
       readStream.close();
       writeStream.end();
 
       if (alreadyExists) {
-        // Overwrite the existing CSV file with the temporary file
-        fs.writeFileSync('./city_populations.csv', fs.readFileSync('./temp.csv'));
-        fs.unlinkSync('./temp.csv');
+        const ws = fs.createWriteStream(csvFilename);
+        ws.write('City,Population\n'); // Writing the header
+        newData.forEach((row) => {
+          ws.write(`${row.City},${row.State},${row.Population}\n`);
+        });
 
         return res.status(200).json({
           message: 'Population data updated successfully.',
