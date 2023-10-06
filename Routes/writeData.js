@@ -10,7 +10,6 @@ router.put("/api/population/state/:state/city/:city", (req, res) => {
 
   let alreadyExists = false;
 
-  // const readStream = fs.createReadStream('./city_populations.csv');
   const result = [];
 
 fs.createReadStream('./city_populations.csv')
@@ -25,7 +24,6 @@ fs.createReadStream('./city_populations.csv')
           alreadyExists = true;
         }
         
-        // console.log(result)
       });
 
       if (alreadyExists) { 
@@ -42,7 +40,6 @@ fs.createReadStream('./city_populations.csv')
           });
         });
       } else {
-        // Append the new data to the file
         fs.appendFile('./city_populations.csv', `${city},${state},${newPopulation}\n`, (err) => {
           if (err) {
             return res.status(500).json({
